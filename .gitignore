@@ -1,3 +1,4 @@
 .DS_Store
 .impeccable/
 .memsearch/
+.claude/scheduled_tasks.lock
