@@ -464,17 +464,47 @@ body {
 .detail-row a { color: var(--ink); font-weight: 600; }
 
 /* ============ DecorMark ============ */
+/* Hand-drawn dot-cluster motif, generated in pure CSS (no raster asset —
+   avoids matting defects in the source PNGs: opaque white patches, stray
+   edge lines). */
 
 .decor-mark {
   position: fixed;
   pointer-events: none;
   user-select: none;
   z-index: -1;
-  max-height: 40vh;
-  mix-blend-mode: multiply;
+  width: min(150px, 16vw);
+  height: min(220px, 24vh);
+  background-repeat: no-repeat;
 }
-.decor-mark.top-right { top: 0; right: -24px; width: min(140px, 16vw); opacity: .9; }
-.decor-mark.bottom-left { bottom: 0; left: -30px; width: min(160px, 16vw); opacity: .9; }
+.decor-mark.top-right {
+  top: 0;
+  right: -20px;
+  background-image:
+    radial-gradient(circle at 70% 8%,  var(--yellow) 0 9px, transparent 10px),
+    radial-gradient(circle at 40% 18%, var(--yellow) 0 6px, transparent 7px),
+    radial-gradient(circle at 85% 30%, var(--yellow) 0 8px, transparent 9px),
+    radial-gradient(circle at 20% 40%, var(--yellow) 0 7px, transparent 8px),
+    radial-gradient(circle at 60% 48%, var(--yellow) 0 10px, transparent 11px),
+    radial-gradient(circle at 30% 62%, var(--yellow) 0 6px, transparent 7px),
+    radial-gradient(circle at 80% 68%, var(--yellow) 0 7px, transparent 8px),
+    radial-gradient(circle at 50% 82%, var(--yellow) 0 9px, transparent 10px),
+    radial-gradient(circle at 15% 90%, var(--yellow) 0 6px, transparent 7px);
+}
+.decor-mark.bottom-left {
+  bottom: 0;
+  left: -20px;
+  background-image:
+    radial-gradient(circle at 25% 6%,  var(--pink) 0 8px, transparent 9px),
+    radial-gradient(circle at 65% 16%, var(--pink) 0 6px, transparent 7px),
+    radial-gradient(circle at 15% 28%, var(--pink) 0 9px, transparent 10px),
+    radial-gradient(circle at 55% 38%, var(--pink) 0 7px, transparent 8px),
+    radial-gradient(circle at 30% 52%, var(--pink) 0 10px, transparent 11px),
+    radial-gradient(circle at 75% 60%, var(--pink) 0 6px, transparent 7px),
+    radial-gradient(circle at 20% 72%, var(--pink) 0 8px, transparent 9px),
+    radial-gradient(circle at 60% 84%, var(--pink) 0 7px, transparent 8px),
+    radial-gradient(circle at 35% 95%, var(--pink) 0 6px, transparent 7px);
+}
 
 /* ============ Footer ============ */
 
