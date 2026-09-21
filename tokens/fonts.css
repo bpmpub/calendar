@@ -1,0 +1,17 @@
+/* Display: Impact — the real BPM headline face, self-hosted from the file the client supplied. */
+@font-face{font-family:"BPM Impact";src:url("../assets/fonts/impact.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
+
+/* Body/UI: Poppins (SUBSTITUTE — nearest match to the site's geometric sans; see readme "Font substitutions") */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+
+:root{
+  --font-display:"BPM Impact",Impact,"Haettenschweiler","Arial Narrow Bold",sans-serif; /* @kind font */
+  --font-body:"Poppins",Helvetica,Arial,sans-serif; /* @kind font */
+  --font-heavy:"Poppins",Helvetica,Arial,sans-serif; /* @kind font */
+  --font-mono:ui-monospace,"SFMono-Regular",Menlo,monospace; /* @kind font */
+
+  --type-headline:var(--font-display); /* @kind font */
+  --type-subhead:var(--font-display); /* @kind font */
+  --type-ui:var(--font-body); /* @kind font */
+  --type-meta:var(--font-body); /* @kind font */
+}

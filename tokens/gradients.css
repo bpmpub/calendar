@@ -1,0 +1,24 @@
+:root{
+  /* Hero / footer sweep: cream-yellow → pink → lavender, on a diagonal */
+  --grad-page:linear-gradient(115deg,var(--cream) 0%,var(--butter) 14%,var(--blush) 46%,var(--pink) 68%,var(--lavender) 100%); /* @kind color */
+  --grad-page-soft:linear-gradient(180deg,var(--cream) 0%,var(--blush) 55%,var(--lilac) 100%); /* @kind color */
+  --grad-page-radial:radial-gradient(130% 100% at 0% 0%,var(--butter) 0%,var(--blush) 42%,var(--orchid) 78%,var(--lavender) 100%); /* @kind color */
+  /* the fade used where a pastel band meets a black band */
+  --grad-fade-to-dark:linear-gradient(180deg,var(--pink) 0%,var(--lavender) 45%,var(--ink) 100%); /* @kind color */
+  --grad-fade-from-dark:linear-gradient(180deg,var(--ink) 0%,var(--lavender) 55%,var(--cream) 100%); /* @kind color */
+
+  /* Sticker headline fills — pastel, always paired with a hard black offset */
+  --grad-type-pink:linear-gradient(96deg,var(--pink) 0%,var(--blush) 45%,var(--butter) 100%); /* @kind color */
+  --grad-type-lilac:linear-gradient(96deg,var(--lavender) 0%,var(--pink) 55%,var(--butter) 100%); /* @kind color */
+  --grad-type-cream:linear-gradient(96deg,var(--butter) 0%,var(--blush) 60%,var(--pink) 100%); /* @kind color */
+  --grad-type-mint:linear-gradient(96deg,var(--mint) 0%,var(--sky) 100%); /* @kind color */
+  --grad-headline:var(--grad-type-pink); /* @kind color */
+
+  /* CTA pills — pastel mint→sky, BLACK label text */
+  --grad-action:linear-gradient(95deg,var(--green) 0%,var(--sky) 100%); /* @kind color */
+  --grad-action-hover:linear-gradient(95deg,var(--mint) 0%,var(--aqua) 100%); /* @kind color */
+  --grad-action-warm:linear-gradient(95deg,var(--yellow) 0%,var(--green) 100%); /* @kind color */
+
+  /* the big pastel "say hello" panel */
+  --grad-panel:linear-gradient(105deg,var(--sky) 0%,var(--mint) 55%,var(--green) 100%); /* @kind color */
+}

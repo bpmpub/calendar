@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BPM Show Calendar</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<img class="decor-mark top-right" src="assets/marks/dot-scatter-yellow.png" alt="" aria-hidden="true">
+<img class="decor-mark bottom-left" src="assets/marks/dot-scatter-pink.png" alt="" aria-hidden="true">
+
+<header class="site-header">
+  <div class="header-inner">
+    <img class="badge-logo" src="assets/bpm-badge-black.webp" alt="Big Picture Media" width="84" height="84">
+    <div class="header-text">
+      <h1 class="bpm-sticker">
+        <span class="sticker-shadow" aria-hidden="true">SHOW CALENDAR</span>
+        <span class="sticker-fill">SHOW CALENDAR</span>
+      </h1>
+      <p class="tagline">Passion over everything.</p>
+    </div>
+  </div>
+</header>
+
+<main class="app">
+  <section class="filter-bar" aria-label="Filters">
+    <div class="filter-group" id="filter-publicist">
+      <button class="filter-toggle" data-filter="publicist" aria-expanded="false">
+        Publicist <span class="count-badge" data-count="publicist" hidden>0</span>
+      </button>
+      <div class="filter-panel" data-panel="publicist" hidden></div>
+    </div>
+
+    <div class="filter-group" id="filter-artist">
+      <button class="filter-toggle" data-filter="artist" aria-expanded="false">
+        Artist <span class="count-badge" data-count="artist" hidden>0</span>
+      </button>
+      <div class="filter-panel" data-panel="artist" hidden>
+        <input type="text" class="artist-search" placeholder="Search artists…" aria-label="Search artists">
+        <div class="filter-options" data-options="artist"></div>
+      </div>
+    </div>
+
+    <div class="filter-group" id="filter-city">
+      <button class="filter-toggle" data-filter="city" aria-expanded="false">
+        City <span class="count-badge" data-count="city" hidden>0</span>
+      </button>
+      <div class="filter-panel" data-panel="city" hidden></div>
+    </div>
+
+    <button class="clear-filters" id="clear-filters" hidden>Clear all filters</button>
+
+    <div class="view-toggle-group">
+      <div class="view-toggle" role="group" aria-label="View">
+        <button class="view-btn active" data-view="month">Month</button>
+        <button class="view-btn" data-view="list">List</button>
+      </div>
+      <div class="time-toggle" role="group" aria-label="Time range">
+        <button class="time-btn active" data-time="upcoming">Upcoming</button>
+        <button class="time-btn" data-time="past">Past</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="active-chips" id="active-chips" hidden></div>
+
+  <section class="calendar-area" id="calendar-area">
+    <div class="month-nav" id="month-nav">
+      <button id="prev-month" aria-label="Previous month">&larr;</button>
+      <h2 id="month-label"></h2>
+      <button id="next-month" aria-label="Next month">&rarr;</button>
+    </div>
+    <div id="view-root"></div>
+  </section>
+
+  <div class="empty-state" id="empty-state" hidden>
+    <div class="splatter" aria-hidden="true">
+      <img src="assets/marks/scribble-white.png" alt="" style="filter: invert(1);">
+    </div>
+    <p>No shows match these filters.</p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div>
+      <div class="footer-word">Big Picture Media</div>
+      <div class="footer-meta">
+        BPM Artist Show Calendar<br>
+        <a href="https://bpmpublicity.com" target="_blank" rel="noopener">bpmpublicity.com</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<div class="detail-overlay" id="detail-overlay" hidden>
+  <div class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+    <button class="detail-close" id="detail-close" aria-label="Close">&times;</button>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

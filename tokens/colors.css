@@ -1,0 +1,54 @@
+:root{
+  /* ink + paper */
+  --ink:#000000;
+  --ink-70:rgba(0,0,0,.70);
+  --ink-45:rgba(0,0,0,.45);
+  --ink-12:rgba(0,0,0,.12);
+  --paper:#FFFFFF;
+  --paper-80:rgba(255,255,255,.80);
+  --paper-55:rgba(255,255,255,.55);
+
+  /* pastel brand ramp — the hero/footer gradient sweep */
+  --cream:#F6EFCF;
+  --butter:#FBE9A7;
+  --yellow:#F7E486;
+  --blush:#F6D9E4;
+  --pink:#F0B4D6;
+  --orchid:#E2A6E0;
+  --lilac:#D9C2EF;
+  --lavender:#C9A9E4;
+
+  /* cool accents — the mint/sky squiggles and the CTA pills */
+  --mint:#C6EDA2;
+  --green:#A9E08F;
+  --sky:#8FD8EC;
+  --periwinkle:#BFC4F5;
+  --aqua:#7FD1E8;
+  --cobalt:#3B6FE0;
+
+  /* neutrals */
+  --smoke:#F4F1EA;
+  --ash:#D8D3C8;
+  --slate:#5A5750;
+  --polaroid:#F7F4EC;
+
+  /* semantic aliases */
+  --text-body:var(--ink);
+  --text-muted:var(--ink-70);
+  --text-faint:var(--ink-45);
+  --text-invert:var(--paper);
+  --surface-page:var(--cream);
+  --surface-dark:var(--ink);
+  --surface-card:var(--paper);
+  --surface-sunken:var(--smoke);
+  --surface-polaroid:var(--polaroid);
+  --border-hard:var(--ink);
+  --border-soft:var(--ink-12);
+  --accent:var(--pink);
+  --accent-alt:var(--lavender);
+  --action:var(--green);
+  --action-end:var(--sky);
+  --focus-ring:var(--cobalt);
+  --mark-light:var(--paper);
+  --mark-dark:var(--ink);
+}

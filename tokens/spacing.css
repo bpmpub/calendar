@@ -1,0 +1,24 @@
+:root{
+  --space-0:0;
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:24px;
+  --space-6:32px;
+  --space-7:48px;
+  --space-8:64px;
+  --space-9:96px;
+  --space-10:144px;
+
+  --gutter:var(--space-5);
+  --section-pad-y:var(--space-9);
+  --section-pad-x:clamp(20px,5vw,72px);
+  --card-pad:var(--space-5);
+  --control-pad-y:14px;
+  --control-pad-x:26px;
+
+  --measure-prose:62ch; /* @kind other */
+  --measure-narrow:42ch; /* @kind other */
+  --max-page:1280px; /* @kind other */
+}

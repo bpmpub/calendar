@@ -1,0 +1,30 @@
+:root{
+  /* radii — pills for controls, soft-rounded photo frames, square for panels */
+  --radius-0:0px;
+  --radius-sm:4px;
+  --radius-md:10px;
+  --radius-lg:22px;
+  --radius-pill:999px;
+  --radius-circle:50%;
+
+  --border-w:2px;
+  --border-w-thick:3px;
+  --border-hard-rule:var(--border-w) solid var(--ink);
+
+  /* shadows */
+  --shadow-photo:0 6px 18px rgba(0,0,0,.18);
+  --shadow-panel:0 14px 40px rgba(0,0,0,.20);
+  --shadow-glow-dark:0 0 46px rgba(169,224,143,.28);
+  --shadow-sticker:4px 4px 0 var(--ink);
+  --shadow-sticker-press:2px 2px 0 var(--ink);
+  --shadow-inset-hairline:inset 0 0 0 1px var(--ink-12);
+
+  --ease-snap:cubic-bezier(.2,.9,.25,1); /* @kind other */
+  --ease-out:cubic-bezier(.16,1,.3,1); /* @kind other */
+  --dur-fast:120ms; /* @kind other */
+  --dur-base:200ms; /* @kind other */
+  --dur-slow:420ms; /* @kind other */
+  --transition-control:transform var(--dur-fast) var(--ease-snap),box-shadow var(--dur-fast) var(--ease-snap),background var(--dur-base) linear,opacity var(--dur-base) linear;
+
+  --blur-glass:12px;
+}
