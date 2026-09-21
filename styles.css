@@ -18,6 +18,8 @@ body {
 
 .site-header {
   padding: var(--space-4) var(--section-pad-x) var(--space-3);
+  position: relative;
+  z-index: 1;
 }
 .header-inner {
   max-width: var(--max-page);
@@ -83,6 +85,7 @@ body {
   margin: 0 auto;
   padding: 0 var(--section-pad-x) var(--space-9);
   position: relative;
+  z-index: 1;
 }
 
 /* ============ FilterBar / Tag pills ============ */
@@ -480,6 +483,8 @@ body {
   color: var(--paper);
   padding: var(--space-7) var(--section-pad-x) var(--space-6);
   margin-top: var(--space-7);
+  position: relative;
+  z-index: 1;
 }
 .footer-inner {
   max-width: var(--max-page);
