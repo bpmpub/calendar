@@ -51,6 +51,7 @@ async function init() {
   await loadArtistsAndShows();
   wireTabs();
   wireShowModal();
+  wireQuickAdd();
   wireArtistModal();
   wireLogout();
   renderShows();
@@ -173,6 +174,134 @@ async function cancelShow(show) {
   renderShows();
 }
 
+// ---------- Quick add (text parsing) ----------
+//
+// Client-side only, no LLM call — regex + matching against the artist
+// list you already have loaded. Fills in what it's confident about
+// (artist, date, venue) and leaves the rest for you to complete in the
+// normal form. Won't guess at city/state/country since getting those
+// wrong silently is worse than leaving them blank.
+
+const MONTH_NAMES = {
+  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+  jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11,
+};
+
+function normalizeYear(y) {
+  const n = Number(y);
+  if (y.length === 4) return n;
+  return n < 70 ? 2000 + n : 1900 + n;
+}
+
+function toIso(year, monthIndex, day) {
+  const mm = String(monthIndex + 1).padStart(2, "0");
+  const dd = String(day).padStart(2, "0");
+  return `${year}-${mm}-${dd}`;
+}
+
+function extractDate(text) {
+  // M/D/YY or M/D/YYYY
+  let m = text.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2,4})\b/);
+  if (m) {
+    const [, mo, day, yr] = m;
+    return { date: toIso(normalizeYear(yr), Number(mo) - 1, Number(day)), match: m[0] };
+  }
+  // Month D, YYYY  (e.g. "March 11 2027", "Mar. 11th, 2027")
+  const monthPattern = "(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\.?";
+  m = text.match(new RegExp(`\\b${monthPattern}\\s+(\\d{1,2})(?:st|nd|rd|th)?,?\\s+(\\d{4})\\b`, "i"));
+  if (m) {
+    const monthIdx = MONTH_NAMES[m[1].toLowerCase()];
+    return { date: toIso(Number(m[3]), monthIdx, Number(m[2])), match: m[0] };
+  }
+  // D Month YYYY (e.g. "11 March 2027")
+  m = text.match(new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+${monthPattern}\\s*,?\\s+(\\d{4})\\b`, "i"));
+  if (m) {
+    const monthIdx = MONTH_NAMES[m[2].toLowerCase()];
+    return { date: toIso(Number(m[3]), monthIdx, Number(m[1])), match: m[0] };
+  }
+  return null;
+}
+
+function extractArtist(text) {
+  const lower = text.toLowerCase();
+  let best = null;
+  for (const artist of state.artists) {
+    const name = artist.name.toLowerCase();
+    const idx = lower.indexOf(name);
+    if (idx === -1) continue;
+    // whole-word-ish check: not preceded/followed by a letter
+    const before = idx === 0 ? " " : lower[idx - 1];
+    const after = lower[idx + name.length] || " ";
+    if (/[a-z0-9]/.test(before) || /[a-z0-9]/.test(after)) continue;
+    if (!best || name.length > best.name.length) {
+      best = { artist, name, index: idx };
+    }
+  }
+  return best;
+}
+
+function extractVenue(text, dateMatch, artistMatch) {
+  const atMatch = text.match(/\bat\s+(.+)/i);
+  if (!atMatch) return null;
+  let venue = atMatch[1];
+  if (dateMatch) venue = venue.split(dateMatch)[0];
+  venue = venue.replace(/\b(on|for|tickets?)\b.*$/i, "");
+  venue = venue.replace(/[,\s]+$/, "").trim();
+  return venue || null;
+}
+
+function parseShowText(text) {
+  const dateResult = extractDate(text);
+  const artistResult = extractArtist(text);
+  const venue = extractVenue(text, dateResult?.match, artistResult);
+
+  return {
+    artist_id: artistResult?.artist.artist_id || "",
+    artistName: artistResult?.artist.name || "",
+    date: dateResult?.date || "",
+    venue: venue || "",
+  };
+}
+
+function wireQuickAdd() {
+  const input = el("#quick-add-input");
+  const btn = el("#quick-add-btn");
+  const messageEl = el("#quick-add-message");
+
+  function run() {
+    const text = input.value.trim();
+    messageEl.innerHTML = "";
+    if (!text) return;
+
+    const parsed = parseShowText(text);
+    const missing = [];
+    if (!parsed.artist_id) missing.push("artist");
+    if (!parsed.date) missing.push("date");
+    if (!parsed.venue) missing.push("venue");
+    missing.push("city"); // never parsed — always needs a manual check
+
+    const found = [];
+    if (parsed.artistName) found.push(`artist: ${escapeHtml(parsed.artistName)}`);
+    if (parsed.date) found.push(`date: ${escapeHtml(parsed.date)}`);
+    if (parsed.venue) found.push(`venue: ${escapeHtml(parsed.venue)}`);
+
+    messageEl.innerHTML = `<div class="quick-add-parsed">
+      ${found.length ? "Found — " + found.join(", ") + "." : "Couldn't confidently parse anything from that."}
+      ${missing.length ? `<br><span class="missing">Check: ${missing.join(", ")}.</span>` : ""}
+    </div>`;
+
+    openShowModal(null, parsed);
+  }
+
+  btn.addEventListener("click", run);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      run();
+    }
+  });
+}
+
 function wireShowModal() {
   const overlay = el("#show-modal-overlay");
   const form = el("#show-form");
@@ -222,9 +351,10 @@ function wireShowModal() {
   });
 }
 
-function openShowModal(show) {
+function openShowModal(show, prefill) {
   const overlay = el("#show-modal-overlay");
   const artistSelect = el("#show-artist");
+  const p = prefill || {};
 
   artistSelect.innerHTML = state.artists
     .map((a) => `<option value="${escapeHtml(a.artist_id)}">${escapeHtml(a.name)}</option>`)
@@ -232,11 +362,11 @@ function openShowModal(show) {
 
   el("#show-modal-title").textContent = show ? "Edit show" : "Add show";
   el("#show-id").value = show ? show.show_id : "";
-  artistSelect.value = show ? show.artist_id : state.artists[0]?.artist_id || "";
-  el("#show-date").value = show ? show.date : "";
+  artistSelect.value = show ? show.artist_id : p.artist_id || state.artists[0]?.artist_id || "";
+  el("#show-date").value = show ? show.date : p.date || "";
   el("#show-time").value = show ? show.time || "" : "";
-  el("#show-venue").value = show ? show.venue : "";
-  el("#show-city").value = show ? show.city : "";
+  el("#show-venue").value = show ? show.venue : p.venue || "";
+  el("#show-city").value = show ? show.city : p.city || "";
   el("#show-state").value = show ? show.state_region || "" : "";
   el("#show-country").value = show ? show.country || "USA" : "USA";
   el("#show-status").value = show ? show.status : "confirmed";

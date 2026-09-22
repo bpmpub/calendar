@@ -790,3 +790,23 @@ body {
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
 
 .dash-empty { text-align: center; padding: var(--space-8); color: var(--ink-45); font-family: var(--type-ui); }
+
+.quick-add {
+  background: var(--paper);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-photo);
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+.quick-add-row { display: flex; gap: var(--space-3); margin-top: var(--space-2); }
+.quick-add-row .input { flex: 1; }
+.quick-add .field-hint { margin-top: var(--space-2); }
+.quick-add-parsed {
+  margin-top: var(--space-3);
+  font-family: var(--type-ui);
+  font-size: var(--fs-small);
+  background: var(--smoke);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+}
+.quick-add-parsed .missing { color: var(--cobalt); font-weight: 600; }

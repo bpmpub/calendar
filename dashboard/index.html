@@ -32,6 +32,17 @@
   <div id="loading" class="dash-empty">Loading…</div>
 
   <div id="shows-panel" hidden>
+    <div class="quick-add">
+      <label class="field-label" for="quick-add-input">Quick add</label>
+      <div class="quick-add-row">
+        <input class="input" type="text" id="quick-add-input"
+          placeholder="e.g. 311 show at Brooklyn Paramount 3/11/27">
+        <button class="btn btn-ink" id="quick-add-btn" type="button">Parse</button>
+      </div>
+      <p class="field-hint">Pulls out what it can find (artist, date, venue) and opens the form to fill in the rest — nothing saves until you hit Save.</p>
+      <div id="quick-add-message"></div>
+    </div>
+
     <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-4);">
       <button class="btn btn-primary" id="add-show-btn">+ Add show</button>
     </div>
