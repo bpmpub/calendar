@@ -54,6 +54,7 @@ async function init() {
   wireQuickAdd();
   wireArtistModal();
   wireLogout();
+  wireAddPasskey();
   renderShows();
   if (state.isAdmin) renderArtists();
 
@@ -105,6 +106,26 @@ function wireLogout() {
   el("#logout-btn").addEventListener("click", async () => {
     await supabase.auth.signOut();
     toLoginPage();
+  });
+}
+
+function wireAddPasskey() {
+  const btn = el("#add-passkey-btn");
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = "Follow your browser's prompt…";
+    try {
+      const { registerPasskey } = await import("../lib/webauthn.js");
+      await registerPasskey();
+      btn.textContent = "Passkey added";
+      setTimeout(() => (btn.textContent = original), 2000);
+    } catch (err) {
+      alert(err.message || "Couldn't add a passkey.");
+      btn.textContent = original;
+    } finally {
+      btn.disabled = false;
+    }
   });
 }
 

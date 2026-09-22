@@ -1,4 +1,5 @@
 import { supabase, configured } from "../lib/supabase-client.js";
+import { loginWithPasskey } from "../lib/webauthn.js";
 
 const form = document.getElementById("magic-link-form");
 const emailInput = document.getElementById("email");
@@ -55,11 +56,27 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-// Passkey sign-in is a fast-follow (see supabase/functions/passkey-verify).
-// Until that Edge Function is deployed, this button explains the state
-// rather than silently failing.
-passkeyBtn.addEventListener("click", () => {
-  showMessage("Passkey sign-in isn't set up yet — use the magic link above for now.", "error");
+passkeyBtn.addEventListener("click", async () => {
+  if (!configured) {
+    showMessage("Supabase isn't configured yet — see lib/config.js.", "error");
+    return;
+  }
+  const email = emailInput.value.trim();
+  if (!email) {
+    showMessage("Enter your email above first, then tap this.", "error");
+    return;
+  }
+  passkeyBtn.disabled = true;
+  passkeyBtn.textContent = "Waiting for your passkey…";
+  try {
+    await loginWithPasskey(email);
+    window.location.href = new URL("../dashboard/", window.location.href).toString();
+  } catch (err) {
+    showMessage(err.message || "Passkey sign-in failed.", "error");
+  } finally {
+    passkeyBtn.disabled = false;
+    passkeyBtn.textContent = "Sign in with a passkey";
+  }
 });
 
 // If already signed in, skip straight to the dashboard.

@@ -21,7 +21,7 @@ Open http://localhost:8080. Kill with `pkill -f "http.server 8080"`.
   source `supabase/seed-data.sql` was generated from
 - `supabase/schema.sql`, `supabase/seed-data.sql` — run once in the
   Supabase SQL editor, see [SETUP.md](SETUP.md)
-- `supabase/functions/passkey-verify/` — scaffolded, not deployed (fast-follow)
+- `supabase/functions/passkey-*/` — passkey login, written but not deployed (see SETUP.md §5)
 - `tokens/*.css` — Big Picture Media design system tokens, imported by `styles.css`
 - `assets/` — brand logo, Impact font (decor marks are pure CSS, not raster)
 

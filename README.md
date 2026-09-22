@@ -37,8 +37,9 @@ Built on the real Big Picture Media design system (`tokens/*.css`, `assets/` —
 
 See [SETUP.md](SETUP.md) for the one-time Supabase setup (create project,
 run `supabase/schema.sql` + `supabase/seed-data.sql`, fill in `lib/config.js`).
-Magic-link login ships first; passkey login is scaffolded but not wired up
-(see `supabase/functions/passkey-verify/`).
+Magic-link login works today. Passkey login is fully coded (dashboard
+"+ Add a passkey" button, login page "Sign in with a passkey" button, 4
+Edge Functions) but not deployed yet — see SETUP.md §5.
 
 ## Open questions (from spec, unresolved)
 

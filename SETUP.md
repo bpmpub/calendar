@@ -54,12 +54,43 @@ this same file, so one edit wires up all three.
    admin email).
 4. Add/edit/cancel a show, confirm it shows up on the public calendar.
 
-## What's NOT done yet (by design)
+## 5. Passkey login (optional, but built)
 
-- **Passkey login** — the brief flags this as a fast-follow, not a launch
-  blocker. Scaffolding is in [`supabase/functions/passkey-verify/index.ts`](supabase/functions/passkey-verify/index.ts)
-  with the full flow commented out and explained. It needs: a WebAuthn
-  library, two more Edge Functions (registration), a challenge-storage
-  table, and `supabase functions deploy` (needs `supabase login`, so
-  that's on you too). The login page's "Sign in with a passkey" button
-  currently just explains it's not ready yet, rather than failing silently.
+Registration/login flows are fully written — 4 Edge Functions in
+`supabase/functions/passkey-*`, plus a `webauthn_challenges` table for
+the two-step handshake. What's left is deploying them, which needs the
+Supabase CLI signed into your account — that's an interactive login I
+can't do from here.
+
+1. Run the migration: SQL Editor → paste and run
+   [`supabase/migrations/2026-09-22-passkey-challenges-table.sql`](supabase/migrations/2026-09-22-passkey-challenges-table.sql).
+   (Skip if you ran the full `schema.sql` fresh after this was added —
+   it's already in there.)
+2. Install the CLI if you don't have it: `brew install supabase/tap/supabase`
+3. `supabase login` (opens a browser, you approve it — this is the
+   account-linking step only you can do)
+4. From the repo root: `supabase link --project-ref cwanxmvbuoogxrmbnppk`
+5. Set the two secrets the functions need (your actual site origin and
+   domain — no trailing slash on either):
+   ```bash
+   supabase secrets set SITE_ORIGIN=https://ash-development.github.io RP_ID=ash-development.github.io
+   ```
+6. Deploy all four:
+   ```bash
+   supabase functions deploy passkey-register-options
+   supabase functions deploy passkey-register-verify
+   supabase functions deploy passkey-login-options
+   supabase functions deploy passkey-login-verify
+   ```
+7. Test: log into `/dashboard/` with magic link once, click **+ Add a
+   passkey** in the header, approve the Face ID / Touch ID / Windows
+   Hello / security key prompt. Log out, go back to `/login/`, enter the
+   same email, click **Sign in with a passkey**.
+
+**Heads up — this hasn't been tested against a live deployment** (I have
+no way to deploy or trigger a real WebAuthn ceremony from here). The
+`@simplewebauthn` library's API shape has shifted between major versions
+before; if a function throws after deploying, check its logs
+(`supabase functions logs <name>`) against the comments in
+`passkey-register-verify/index.ts` and `passkey-login-verify/index.ts` —
+those flag the two spots most likely to need a small adjustment.

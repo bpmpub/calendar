@@ -140,6 +140,7 @@ create policy "admin delete artists" on artists
 create table if not exists passkeys (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
+  user_email text not null,  -- denormalized for the login Edge Function's lookup-by-email
   credential_id text not null unique,
   public_key text not null,
   counter bigint not null default 0,
@@ -152,6 +153,20 @@ create policy "user manages own passkeys" on passkeys
   for all to authenticated
   using (user_id = auth.uid())
   with check (user_id = auth.uid());
+
+-- Short-lived WebAuthn challenges, one per in-progress registration or
+-- login ceremony. Written and read only by the Edge Functions (service
+-- role, which bypasses RLS) — no policy here grants anon/authenticated
+-- access on purpose, since a readable challenge would let anyone forge
+-- a response to it.
+create table if not exists webauthn_challenges (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  challenge text not null,
+  purpose text not null check (purpose in ('register', 'login')),
+  created_at timestamptz not null default now()
+);
+alter table webauthn_challenges enable row level security;
 
 -- ---------- Seed the admin allowlist ----------
 insert into admin_emails (email) values
