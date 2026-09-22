@@ -404,9 +404,40 @@ function renderArtists() {
   });
 }
 
+function getDistinctPublicists() {
+  const seen = new Map();
+  for (const a of state.artists) {
+    if (!seen.has(a.publicist_email)) {
+      seen.set(a.publicist_email, { name: a.publicist_name, email: a.publicist_email });
+    }
+  }
+  return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function applyPublicistSelection() {
+  const select = el("#artist-publicist-select");
+  const newFields = el("#artist-publicist-new-fields");
+  const nameInput = el("#artist-publicist-name");
+  const emailInput = el("#artist-publicist-email");
+
+  if (select.value === "__new__") {
+    newFields.hidden = false;
+    nameInput.value = "";
+    emailInput.value = "";
+    return;
+  }
+  newFields.hidden = true;
+  const [name, email] = select.value.split("::");
+  nameInput.value = name;
+  emailInput.value = email;
+}
+
 function wireArtistModal() {
   const overlay = el("#artist-modal-overlay");
   const form = el("#artist-form");
+  const publicistSelect = el("#artist-publicist-select");
+
+  publicistSelect.addEventListener("change", applyPublicistSelection);
 
   el("#add-artist-btn").addEventListener("click", () => openArtistModal(null));
   el("#artist-cancel-btn").addEventListener("click", () => (overlay.hidden = true));
@@ -446,16 +477,39 @@ function wireArtistModal() {
 
 function openArtistModal(artist) {
   const overlay = el("#artist-modal-overlay");
+  const select = el("#artist-publicist-select");
+
+  const publicists = getDistinctPublicists();
+  select.innerHTML =
+    publicists
+      .map((p) => `<option value="${escapeHtml(p.email)}::${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`)
+      .join("") + `<option value="__new__">+ New publicist…</option>`;
+
   el("#artist-modal-title").textContent = artist ? "Edit artist" : "Add artist";
   el("#artist-original-id").value = artist ? artist.artist_id : "";
   el("#artist-id").value = artist ? artist.artist_id : "";
   el("#artist-id").disabled = Boolean(artist);
   el("#artist-name").value = artist ? artist.name : "";
-  el("#artist-publicist-name").value = artist ? artist.publicist_name : "";
-  el("#artist-publicist-email").value = artist ? artist.publicist_email : "";
   el("#artist-genre").value = artist ? artist.genre || "" : "";
   el("#artist-active").checked = artist ? artist.active : true;
   el("#artist-form-message").innerHTML = "";
+
+  const existingMatch = artist
+    ? publicists.find((p) => p.email === artist.publicist_email)
+    : null;
+  if (existingMatch) {
+    select.value = `${existingMatch.email}::${existingMatch.name}`;
+  } else {
+    select.value = "__new__";
+  }
+  applyPublicistSelection();
+  if (!existingMatch && artist) {
+    // Editing an artist whose publicist isn't in the distinct list for
+    // some reason (shouldn't normally happen) — keep their real values.
+    el("#artist-publicist-name").value = artist.publicist_name;
+    el("#artist-publicist-email").value = artist.publicist_email;
+  }
+
   overlay.hidden = false;
 }
 

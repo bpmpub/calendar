@@ -144,7 +144,15 @@
         <label class="field-label" for="artist-name">Name</label>
         <input class="input" type="text" id="artist-name" required>
       </div>
-      <div class="field-row">
+      <div class="field">
+        <label class="field-label" for="artist-publicist-select">Publicist</label>
+        <div class="select">
+          <select class="input" id="artist-publicist-select">
+            <option value="__new__">+ New publicist…</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row" id="artist-publicist-new-fields">
         <div class="field">
           <label class="field-label" for="artist-publicist-name">Publicist name</label>
           <input class="input" type="text" id="artist-publicist-name" required>
