@@ -419,6 +419,16 @@ import { supabase, configured } from "./lib/supabase-client.js";
     });
   }
 
+  async function updateLoginLink() {
+    const link = el("#publicist-login-link");
+    if (!link || !configured) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      link.textContent = "Dashboard";
+      link.href = "dashboard/";
+    }
+  }
+
   async function init() {
     await loadData();
     buildFilterOptions();
@@ -429,6 +439,7 @@ import { supabase, configured } from "./lib/supabase-client.js";
     wireMonthNav();
     wireDetailOverlay();
     render();
+    updateLoginLink();
   }
 
   init();
