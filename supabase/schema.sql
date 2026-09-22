@@ -40,8 +40,10 @@ alter table admin_emails enable row level security;
 create policy "public read artists" on artists
   for select using (true);
 
-create policy "public read shows" on shows
-  for select using (true);
+-- shows.status = 'pending' means the show hasn't been announced yet —
+-- the read policy below (after is_admin exists) keeps those hidden from
+-- the public calendar while still showing them to the publicist who
+-- owns the artist (or an admin) when logged into the dashboard.
 
 -- admin_emails is read only by the login page's client-side allowlist
 -- check. Emails aren't sensitive, so a public select is fine here.
@@ -57,6 +59,25 @@ stable
 as $$
   select exists (select 1 from admin_emails where email = user_email);
 $$;
+
+-- Everyone sees non-pending shows; a publicist additionally sees their
+-- own pending shows (and an admin sees all pending shows) when signed in.
+create policy "read shows" on shows
+  for select
+  using (
+    status <> 'pending'
+    or (
+      auth.role() = 'authenticated'
+      and (
+        is_admin(auth.jwt() ->> 'email')
+        or exists (
+          select 1 from artists
+          where artists.artist_id = shows.artist_id
+            and artists.publicist_email = auth.jwt() ->> 'email'
+        )
+      )
+    )
+  );
 
 -- Publicists can write shows for artists they own; admins can write any.
 create policy "publicist or admin insert shows" on shows
