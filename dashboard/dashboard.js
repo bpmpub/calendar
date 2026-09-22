@@ -284,42 +284,135 @@ function parseShowText(text) {
   };
 }
 
-function wireQuickAdd() {
-  const input = el("#quick-add-input");
-  const btn = el("#quick-add-btn");
-  const messageEl = el("#quick-add-message");
+let quickAddRows = [];
+let quickAddRowSeq = 0;
 
-  function run() {
-    const text = input.value.trim();
-    messageEl.innerHTML = "";
-    if (!text) return;
+function quickAddRowReady(row) {
+  return Boolean(row.artist_id && row.date && row.venue.trim() && row.city.trim());
+}
 
-    const parsed = parseShowText(text);
-    const missing = [];
-    if (!parsed.artist_id) missing.push("artist");
-    if (!parsed.date) missing.push("date");
-    if (!parsed.venue) missing.push("venue");
-    missing.push("city"); // never parsed — always needs a manual check
-
-    const found = [];
-    if (parsed.artistName) found.push(`artist: ${escapeHtml(parsed.artistName)}`);
-    if (parsed.date) found.push(`date: ${escapeHtml(parsed.date)}`);
-    if (parsed.venue) found.push(`venue: ${escapeHtml(parsed.venue)}`);
-
-    messageEl.innerHTML = `<div class="quick-add-parsed">
-      ${found.length ? "Found — " + found.join(", ") + "." : "Couldn't confidently parse anything from that."}
-      ${missing.length ? `<br><span class="missing">Check: ${missing.join(", ")}.</span>` : ""}
-    </div>`;
-
-    openShowModal(null, parsed);
+function renderQuickAddPreview() {
+  const container = el("#quick-add-preview");
+  if (quickAddRows.length === 0) {
+    container.innerHTML = "";
+    return;
   }
 
-  btn.addEventListener("click", run);
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      run();
-    }
+  const readyCount = quickAddRows.filter(quickAddRowReady).length;
+
+  const rowsHtml = quickAddRows
+    .map((row) => {
+      const artistOptions = state.artists
+        .map(
+          (a) =>
+            `<option value="${escapeHtml(a.artist_id)}" ${a.artist_id === row.artist_id ? "selected" : ""}>${escapeHtml(a.name)}</option>`
+        )
+        .join("");
+      return `
+        <div class="quick-add-preview-row" data-row-id="${row.id}" title="${escapeHtml(row.raw)}">
+          <select data-field="artist_id" class="${row.artist_id ? "" : "missing"}">
+            <option value="">— pick artist —</option>
+            ${artistOptions}
+          </select>
+          <input type="date" data-field="date" value="${escapeHtml(row.date)}" class="${row.date ? "" : "missing"}">
+          <input type="text" data-field="venue" placeholder="Venue" value="${escapeHtml(row.venue)}" class="${row.venue.trim() ? "" : "missing"}">
+          <input type="text" data-field="city" placeholder="City" value="${escapeHtml(row.city)}" class="${row.city.trim() ? "" : "missing"}">
+          <input type="text" data-field="state_region" placeholder="State">
+          <button type="button" class="quick-add-remove-row qa-remove" title="Remove">✕</button>
+        </div>
+      `;
+    })
+    .join("");
+
+  container.innerHTML = `
+    <div class="quick-add-preview-head">
+      <span>Artist</span><span>Date</span><span>Venue</span><span>City</span><span>State</span><span></span>
+    </div>
+    ${rowsHtml}
+    <div class="quick-add-actions">
+      <button class="btn btn-primary" id="quick-add-submit" type="button" ${readyCount === 0 ? "disabled" : ""}>
+        Add ${readyCount} show${readyCount === 1 ? "" : "s"}
+      </button>
+      <p class="field-hint">${quickAddRows.length - readyCount} row(s) still need artist / date / venue / city filled in.</p>
+    </div>
+  `;
+
+  container.querySelectorAll(".quick-add-preview-row").forEach((rowEl) => {
+    const rowId = Number(rowEl.dataset.rowId);
+    rowEl.querySelectorAll("[data-field]").forEach((fieldEl) => {
+      fieldEl.addEventListener("change", () => {
+        const row = quickAddRows.find((r) => r.id === rowId);
+        if (row) row[fieldEl.dataset.field] = fieldEl.value;
+        renderQuickAddPreview();
+      });
+    });
+    rowEl.querySelector(".quick-add-remove-row").addEventListener("click", () => {
+      quickAddRows = quickAddRows.filter((r) => r.id !== rowId);
+      renderQuickAddPreview();
+    });
+  });
+
+  const submitBtn = el("#quick-add-submit");
+  if (submitBtn) submitBtn.addEventListener("click", submitQuickAddRows);
+}
+
+async function submitQuickAddRows() {
+  const ready = quickAddRows.filter(quickAddRowReady);
+  if (ready.length === 0) return;
+
+  const submitBtn = el("#quick-add-submit");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Adding…";
+
+  const payload = ready.map((row) => ({
+    artist_id: row.artist_id,
+    date: row.date,
+    venue: row.venue.trim(),
+    city: row.city.trim(),
+    state_region: row.state_region.trim() || null,
+    country: "USA",
+    status: "confirmed",
+  }));
+
+  const { error } = await supabase.from("shows").insert(payload);
+  if (error) {
+    alert(error.message);
+    submitBtn.disabled = false;
+    submitBtn.textContent = `Add ${ready.length} shows`;
+    return;
+  }
+
+  const readyIds = new Set(ready.map((r) => r.id));
+  quickAddRows = quickAddRows.filter((r) => !readyIds.has(r.id));
+  await loadArtistsAndShows();
+  renderShows();
+  renderQuickAddPreview();
+}
+
+function wireQuickAdd() {
+  const textarea = el("#quick-add-input");
+  const btn = el("#quick-add-btn");
+
+  btn.addEventListener("click", () => {
+    const lines = textarea.value.split("\n").map((l) => l.trim()).filter(Boolean);
+    if (lines.length === 0) return;
+
+    const newRows = lines.map((line) => {
+      const parsed = parseShowText(line);
+      quickAddRowSeq += 1;
+      return {
+        id: quickAddRowSeq,
+        raw: line,
+        artist_id: parsed.artist_id,
+        date: parsed.date,
+        venue: parsed.venue,
+        city: "",
+        state_region: "",
+      };
+    });
+    quickAddRows = quickAddRows.concat(newRows);
+    textarea.value = "";
+    renderQuickAddPreview();
   });
 }
 

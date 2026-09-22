@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard — BPM Show Calendar</title>
-<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../styles.css?v=4">
 </head>
 <body>
 
@@ -35,13 +35,13 @@
   <div id="shows-panel" hidden>
     <div class="quick-add">
       <label class="field-label" for="quick-add-input">Quick add</label>
+      <textarea class="input" id="quick-add-input" rows="3"
+        placeholder="One show per line, e.g.&#10;311 show at Brooklyn Paramount 3/11/27&#10;Waterparks at The Fillmore on March 5th, 2027"></textarea>
       <div class="quick-add-row">
-        <input class="input" type="text" id="quick-add-input"
-          placeholder="e.g. 311 show at Brooklyn Paramount 3/11/27">
         <button class="btn btn-ink" id="quick-add-btn" type="button">Parse</button>
+        <p class="field-hint">Pulls out what it can find per line (artist, date, venue) — review and fill in city/state below, nothing saves until you hit Add.</p>
       </div>
-      <p class="field-hint">Pulls out what it can find (artist, date, venue) and opens the form to fill in the rest — nothing saves until you hit Save.</p>
-      <div id="quick-add-message"></div>
+      <div id="quick-add-preview"></div>
     </div>
 
     <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-4);">
@@ -180,6 +180,6 @@
   </div>
 </div>
 
-<script type="module" src="dashboard.js"></script>
+<script type="module" src="dashboard.js?v=4"></script>
 </body>
 </html>
