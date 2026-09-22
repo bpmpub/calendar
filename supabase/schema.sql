@@ -133,6 +133,7 @@ create policy "user manages own passkeys" on passkeys
   with check (user_id = auth.uid());
 
 -- ---------- Seed the admin allowlist ----------
--- Replace with Becky's real login email before running.
-insert into admin_emails (email) values ('becky@bpmpublicity.com')
+insert into admin_emails (email) values
+  ('becky@bpmpublicity.com'),
+  ('internash@bigpicturemediaonline.com')
   on conflict (email) do nothing;
