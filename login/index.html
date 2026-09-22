@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Publicist Login — BPM Show Calendar</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<div class="auth-page">
+  <div class="auth-card">
+    <img class="badge-logo" src="../assets/bpm-badge-black.webp" alt="Big Picture Media" width="64" height="64">
+    <h1>Publicist Login</h1>
+    <p class="auth-sub">Sign in to edit your artists' shows.</p>
+
+    <form id="magic-link-form">
+      <div class="field">
+        <label class="field-label" for="email">Email</label>
+        <input class="input" type="email" id="email" name="email" placeholder="you@bpmpublicity.com" required autocomplete="email">
+      </div>
+      <button class="btn btn-ink btn-block" type="submit" id="magic-link-btn">Send magic link</button>
+    </form>
+
+    <div class="auth-divider">or</div>
+
+    <button class="btn btn-outline btn-block" id="passkey-btn" type="button">Sign in with a passkey</button>
+
+    <div id="auth-message"></div>
+
+    <a class="auth-footer-link" href="../index.html">&larr; Back to the public calendar</a>
+  </div>
+</div>
+
+<script type="module" src="login.js"></script>
+</body>
+</html>

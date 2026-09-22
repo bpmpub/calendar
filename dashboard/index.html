@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — BPM Show Calendar</title>
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="dash-header">
+    <div style="display:flex;align-items:center;gap:var(--space-3);">
+      <img class="badge-logo" src="../assets/bpm-badge-black.webp" alt="Big Picture Media">
+      <div>
+        <div style="font-family:var(--font-display);font-size:1.4rem;text-transform:uppercase;">Dashboard</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:var(--space-4);">
+      <span class="dash-user" id="dash-user"></span>
+      <button class="btn btn-outline" id="logout-btn">Log out</button>
+    </div>
+  </div>
+</header>
+
+<nav class="dash-tabs">
+  <button class="dash-tab active" data-tab="shows">Shows</button>
+  <button class="dash-tab" data-tab="artists" id="artists-tab-btn" hidden>Artists</button>
+</nav>
+
+<main class="dash-main">
+  <div id="loading" class="dash-empty">Loading…</div>
+
+  <div id="shows-panel" hidden>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-4);">
+      <button class="btn btn-primary" id="add-show-btn">+ Add show</button>
+    </div>
+    <div id="shows-list"></div>
+  </div>
+
+  <div id="artists-panel" hidden>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-4);">
+      <button class="btn btn-primary" id="add-artist-btn">+ Add artist</button>
+    </div>
+    <div id="artists-list"></div>
+  </div>
+</main>
+
+<!-- Show add/edit modal -->
+<div class="dash-modal-overlay" id="show-modal-overlay" hidden>
+  <div class="dash-modal">
+    <h2 id="show-modal-title">Add show</h2>
+    <form id="show-form">
+      <input type="hidden" id="show-id">
+      <div class="field">
+        <label class="field-label" for="show-artist">Artist</label>
+        <div class="select">
+          <select class="input" id="show-artist" required></select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="show-date">Date</label>
+          <input class="input" type="date" id="show-date" required>
+        </div>
+        <div class="field">
+          <label class="field-label" for="show-time">Time (optional)</label>
+          <input class="input" type="text" id="show-time" placeholder="8:00 PM doors">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="show-venue">Venue</label>
+        <input class="input" type="text" id="show-venue" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="show-city">City</label>
+          <input class="input" type="text" id="show-city" required>
+        </div>
+        <div class="field">
+          <label class="field-label" for="show-state">State / region</label>
+          <input class="input" type="text" id="show-state">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="show-country">Country</label>
+          <input class="input" type="text" id="show-country" value="USA">
+        </div>
+        <div class="field">
+          <label class="field-label" for="show-status">Status</label>
+          <div class="select">
+            <select class="input" id="show-status">
+              <option value="confirmed">Confirmed</option>
+              <option value="pending">Pending</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="show-tour">Tour name (optional)</label>
+        <input class="input" type="text" id="show-tour">
+      </div>
+      <div class="field">
+        <label class="field-label" for="show-ticket">Ticket link (optional)</label>
+        <input class="input" type="url" id="show-ticket">
+      </div>
+      <div class="field">
+        <label class="field-label" for="show-notes">Notes (optional)</label>
+        <textarea class="input" id="show-notes" rows="3"></textarea>
+      </div>
+      <div id="show-form-message"></div>
+      <div class="dash-modal-actions">
+        <button class="btn btn-outline" type="button" id="show-cancel-btn">Cancel</button>
+        <button class="btn btn-primary" type="submit" id="show-save-btn">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Artist add/edit modal (admin only) -->
+<div class="dash-modal-overlay" id="artist-modal-overlay" hidden>
+  <div class="dash-modal">
+    <h2 id="artist-modal-title">Add artist</h2>
+    <form id="artist-form">
+      <input type="hidden" id="artist-original-id">
+      <div class="field">
+        <label class="field-label" for="artist-id">Artist ID (slug)</label>
+        <input class="input" type="text" id="artist-id" placeholder="e.g. waterparks" required>
+      </div>
+      <div class="field">
+        <label class="field-label" for="artist-name">Name</label>
+        <input class="input" type="text" id="artist-name" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="artist-publicist-name">Publicist name</label>
+          <input class="input" type="text" id="artist-publicist-name" required>
+        </div>
+        <div class="field">
+          <label class="field-label" for="artist-publicist-email">Publicist email</label>
+          <input class="input" type="email" id="artist-publicist-email" required>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="artist-genre">Genre (optional)</label>
+        <input class="input" type="text" id="artist-genre">
+      </div>
+      <div class="field" style="flex-direction:row;align-items:center;gap:var(--space-2);">
+        <input type="checkbox" id="artist-active" checked style="width:auto;">
+        <label class="field-label" for="artist-active" style="text-transform:none;">Active</label>
+      </div>
+      <div id="artist-form-message"></div>
+      <div class="dash-modal-actions">
+        <button class="btn btn-outline" type="button" id="artist-cancel-btn">Cancel</button>
+        <button class="btn btn-primary" type="submit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module" src="dashboard.js"></script>
+</body>
+</html>

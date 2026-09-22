@@ -1,3 +1,5 @@
+import { supabase, configured } from "./lib/supabase-client.js";
+
 (function () {
   "use strict";
 
@@ -23,6 +25,18 @@
   }
 
   async function loadData() {
+    if (configured) {
+      const [artistsRes, showsRes] = await Promise.all([
+        supabase.from("artists").select("*").eq("active", true),
+        supabase.from("shows").select("*").order("date"),
+      ]);
+      if (artistsRes.error) throw artistsRes.error;
+      if (showsRes.error) throw showsRes.error;
+      state.artists = artistsRes.data.map((a) => ({ ...a, publicist: a.publicist_name }));
+      state.shows = showsRes.data;
+      return;
+    }
+    // Fallback while Supabase isn't configured yet (see lib/config.js).
     const [artistsRes, showsRes] = await Promise.all([
       fetch("data/artists.json"),
       fetch("data/shows.json"),
