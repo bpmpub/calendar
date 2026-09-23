@@ -25,6 +25,7 @@ Deno.serve(async (req) => {
     rpID: RP_ID,
     userID: new TextEncoder().encode(user.id),
     userName: user.email ?? "",
+    userDisplayName: user.email ?? "",
     attestationType: "none",
     excludeCredentials: (existing ?? []).map((p) => ({
       id: p.credential_id,
