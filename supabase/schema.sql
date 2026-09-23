@@ -200,7 +200,8 @@ alter table webauthn_challenges enable row level security;
 -- ---------- Seed the admin allowlist ----------
 insert into admin_emails (email) values
   ('becky@bpmpublicity.com'),
-  ('internash@bigpicturemediaonline.com')
+  ('internash@bigpicturemediaonline.com'),
+  ('natalie@bpmpublicity.com')
   on conflict (email) do nothing;
 
 -- ---------- Seed the BPM team as publicists ----------
