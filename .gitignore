@@ -2,3 +2,4 @@
 .impeccable/
 .memsearch/
 .claude/scheduled_tasks.lock
+supabase/.temp/
