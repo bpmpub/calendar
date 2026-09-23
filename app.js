@@ -1,4 +1,4 @@
-import { supabase, configured } from "./lib/supabase-client.js";
+import { supabase, configured } from "./lib/supabase-client.js?v=10";
 
 (function () {
   "use strict";

@@ -1,5 +1,5 @@
-import { supabase, configured } from "../lib/supabase-client.js";
-import { loginWithPasskey } from "../lib/webauthn.js";
+import { supabase, configured } from "../lib/supabase-client.js?v=10";
+import { loginWithPasskey } from "../lib/webauthn.js?v=10";
 
 const form = document.getElementById("magic-link-form");
 const emailInput = document.getElementById("email");

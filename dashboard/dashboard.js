@@ -1,4 +1,4 @@
-import { supabase, configured } from "../lib/supabase-client.js";
+import { supabase, configured } from "../lib/supabase-client.js?v=10";
 
 const state = {
   user: null,
@@ -116,7 +116,7 @@ async function hasPasskey() {
   // passkeys registered — root cause not worth chasing further, since
   // passkey-login-options already does this exact existence check
   // correctly (service role) as part of the real login flow.
-  const { hasRegisteredPasskey } = await import("../lib/webauthn.js");
+  const { hasRegisteredPasskey } = await import("../lib/webauthn.js?v=10");
   return hasRegisteredPasskey(state.user.email);
 }
 
@@ -132,7 +132,7 @@ async function wireAddPasskey() {
     const original = btn.textContent;
     btn.textContent = "Follow your browser's prompt…";
     try {
-      const { registerPasskey } = await import("../lib/webauthn.js");
+      const { registerPasskey } = await import("../lib/webauthn.js?v=10");
       await registerPasskey();
       btn.hidden = true;
     } catch (err) {
