@@ -109,8 +109,19 @@ function wireLogout() {
   });
 }
 
-function wireAddPasskey() {
+async function hasPasskey() {
+  const { data } = await supabase.from("passkeys").select("id").eq("user_id", state.user.id).limit(1);
+  return Boolean(data && data.length);
+}
+
+async function wireAddPasskey() {
   const btn = el("#add-passkey-btn");
+
+  if (await hasPasskey()) {
+    btn.hidden = true;
+    return;
+  }
+
   btn.addEventListener("click", async () => {
     btn.disabled = true;
     const original = btn.textContent;
@@ -118,12 +129,10 @@ function wireAddPasskey() {
     try {
       const { registerPasskey } = await import("../lib/webauthn.js");
       await registerPasskey();
-      btn.textContent = "Passkey added";
-      setTimeout(() => (btn.textContent = original), 2000);
+      btn.hidden = true;
     } catch (err) {
       alert(err.message || "Couldn't add a passkey.");
       btn.textContent = original;
-    } finally {
       btn.disabled = false;
     }
   });
