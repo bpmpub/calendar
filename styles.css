@@ -754,7 +754,7 @@ body {
   transition: transform var(--dur-fast) var(--ease-snap);
 }
 .dash-artist-group[open] summary::before { transform: rotate(90deg); }
-.dash-artist-group[open] summary { margin-bottom: var(--space-3); border-radius: var(--radius-md) var(--radius-md) 0 0; }
+.dash-artist-group[open] summary { margin-bottom: var(--space-3); }
 .dash-artist-count {
   font-family: var(--type-meta);
   font-size: var(--fs-micro);
