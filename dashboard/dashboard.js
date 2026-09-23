@@ -111,7 +111,19 @@ function wireLogout() {
 }
 
 async function hasPasskey() {
-  const { data } = await supabase.from("passkeys").select("id").eq("user_id", state.user.id).limit(1);
+  // Match on user_id OR user_email in case the two ever disagree for
+  // some edge-case account (e.g. email changed after the passkey was
+  // registered) — belt and suspenders, both columns are populated by
+  // the register-verify function at insert time.
+  const { data, error } = await supabase
+    .from("passkeys")
+    .select("id")
+    .or(`user_id.eq.${state.user.id},user_email.eq.${state.user.email}`)
+    .limit(1);
+  if (error) {
+    console.warn("hasPasskey query failed:", error);
+    throw error;
+  }
   return Boolean(data && data.length);
 }
 
