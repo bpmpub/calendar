@@ -111,20 +111,13 @@ function wireLogout() {
 }
 
 async function hasPasskey() {
-  // Match on user_id OR user_email in case the two ever disagree for
-  // some edge-case account (e.g. email changed after the passkey was
-  // registered) — belt and suspenders, both columns are populated by
-  // the register-verify function at insert time.
-  const { data, error } = await supabase
-    .from("passkeys")
-    .select("id")
-    .or(`user_id.eq.${state.user.id},user_email.eq.${state.user.email}`)
-    .limit(1);
-  if (error) {
-    console.warn("hasPasskey query failed:", error);
-    throw error;
-  }
-  return Boolean(data && data.length);
+  // A direct RLS-scoped table read was silently returning zero rows for
+  // an account confirmed (server-side, bypassing RLS) to have two
+  // passkeys registered — root cause not worth chasing further, since
+  // passkey-login-options already does this exact existence check
+  // correctly (service role) as part of the real login flow.
+  const { hasRegisteredPasskey } = await import("../lib/webauthn.js");
+  return hasRegisteredPasskey(state.user.email);
 }
 
 async function wireAddPasskey() {
