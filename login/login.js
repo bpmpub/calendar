@@ -13,13 +13,13 @@ function showMessage(text, kind) {
 
 async function isAllowlisted(email) {
   const lower = email.trim().toLowerCase();
-  const [artistsRes, adminsRes] = await Promise.all([
-    supabase.from("artists").select("publicist_email"),
+  const [publicistsRes, adminsRes] = await Promise.all([
+    supabase.from("publicists").select("email"),
     supabase.from("admin_emails").select("email"),
   ]);
-  const artistEmails = (artistsRes.data || []).map((a) => a.publicist_email.toLowerCase());
+  const publicistEmails = (publicistsRes.data || []).map((p) => p.email.toLowerCase());
   const adminEmails = (adminsRes.data || []).map((a) => a.email.toLowerCase());
-  return artistEmails.includes(lower) || adminEmails.includes(lower);
+  return publicistEmails.includes(lower) || adminEmails.includes(lower);
 }
 
 form.addEventListener("submit", async (e) => {

@@ -31,9 +31,20 @@ create table if not exists admin_emails (
   email text primary key
 );
 
+-- Publicists exist independently of owning any artists — this is what
+-- lets someone be added to the login allowlist and given a profile
+-- before any artists are assigned to them. artists.publicist_email /
+-- publicist_name stay as-is (denormalized, no FK) so this table is
+-- additive, not a breaking change to the artists table.
+create table if not exists publicists (
+  email text primary key,
+  name text not null
+);
+
 alter table artists enable row level security;
 alter table shows enable row level security;
 alter table admin_emails enable row level security;
+alter table publicists enable row level security;
 
 -- ---------- Public (anon key) read access ----------
 
@@ -48,6 +59,11 @@ create policy "public read artists" on artists
 -- admin_emails is read only by the login page's client-side allowlist
 -- check. Emails aren't sensitive, so a public select is fine here.
 create policy "public read admin_emails" on admin_emails
+  for select using (true);
+
+-- Public so the login page's allowlist check and the dashboard's
+-- publicist picker can both read it without a session.
+create policy "public read publicists" on publicists
   for select using (true);
 
 -- ---------- Authenticated write access ----------
@@ -135,6 +151,19 @@ create policy "admin delete artists" on artists
   for delete to authenticated
   using (is_admin(auth.jwt() ->> 'email'));
 
+create policy "admin insert publicists" on publicists
+  for insert to authenticated
+  with check (is_admin(auth.jwt() ->> 'email'));
+
+create policy "admin update publicists" on publicists
+  for update to authenticated
+  using (is_admin(auth.jwt() ->> 'email'))
+  with check (is_admin(auth.jwt() ->> 'email'));
+
+create policy "admin delete publicists" on publicists
+  for delete to authenticated
+  using (is_admin(auth.jwt() ->> 'email'));
+
 -- ---------- Passkeys (fast-follow, not required for magic-link launch) ----------
 
 create table if not exists passkeys (
@@ -172,4 +201,13 @@ alter table webauthn_challenges enable row level security;
 insert into admin_emails (email) values
   ('becky@bpmpublicity.com'),
   ('internash@bigpicturemediaonline.com')
+  on conflict (email) do nothing;
+
+-- ---------- Seed the BPM team as publicists ----------
+insert into publicists (email, name) values
+  ('becky@bpmpublicity.com', 'Becky Kovach'),
+  ('natalie@bpmpublicity.com', 'Natalie Schaffer'),
+  ('dayna@bpmpublicity.com', 'Dayna Ghiraldi-Travers'),
+  ('kerriann@bpmpublicity.com', 'Kerri-Ann Seredinsky'),
+  ('liz@bpmpublicity.com', 'Liz Wiltshire')
   on conflict (email) do nothing;

@@ -527,14 +527,12 @@ function renderArtists() {
   });
 }
 
-function getDistinctPublicists() {
-  const seen = new Map();
-  for (const a of state.artists) {
-    if (!seen.has(a.publicist_email)) {
-      seen.set(a.publicist_email, { name: a.publicist_name, email: a.publicist_email });
-    }
-  }
-  return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
+async function getDistinctPublicists() {
+  // Reads the standalone publicists table, not just whoever already
+  // owns an artist — so a publicist can be picked here before they
+  // have any artists assigned.
+  const { data } = await supabase.from("publicists").select("*").order("name");
+  return data || [];
 }
 
 function applyPublicistSelection() {
@@ -584,6 +582,13 @@ function wireArtistModal() {
     };
 
     try {
+      // Keep the standalone publicists table in sync so a brand-new
+      // publicist typed here (rather than picked from the dropdown)
+      // shows up as a known publicist everywhere else too.
+      await supabase
+        .from("publicists")
+        .upsert({ email: payload.publicist_email, name: payload.publicist_name }, { onConflict: "email" });
+
       const { error } = originalId
         ? await supabase.from("artists").update(payload).eq("artist_id", originalId)
         : await supabase.from("artists").insert(payload);
@@ -598,11 +603,11 @@ function wireArtistModal() {
   });
 }
 
-function openArtistModal(artist) {
+async function openArtistModal(artist) {
   const overlay = el("#artist-modal-overlay");
   const select = el("#artist-publicist-select");
 
-  const publicists = getDistinctPublicists();
+  const publicists = await getDistinctPublicists();
   select.innerHTML =
     publicists
       .map((p) => `<option value="${escapeHtml(p.email)}::${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`)
