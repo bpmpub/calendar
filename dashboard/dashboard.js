@@ -589,7 +589,7 @@ function applyPublicistSelection() {
     return;
   }
   newFields.hidden = true;
-  const [name, email] = select.value.split("::");
+  const [email, name] = select.value.split("::");
   nameInput.value = name;
   emailInput.value = email;
 }
