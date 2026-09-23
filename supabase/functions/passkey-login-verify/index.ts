@@ -35,17 +35,18 @@ Deno.serve(async (req) => {
 
   let verification;
   try {
-    // v10 takes the stored credential as `credential`, not the older
-    // flat `authenticator` shape — check this against the installed
-    // version's types if it throws after a version bump.
+    // Confirmed against the actual @simplewebauthn/server@10.0.1 source:
+    // the param is `authenticator` with flat credentialID/
+    // credentialPublicKey/counter fields — not `credential` (that's a
+    // later-version shape, wrongly assumed in an earlier pass here).
     verification = await verifyAuthenticationResponse({
       response,
       expectedChallenge: challengeRow.challenge,
       expectedOrigin: SITE_ORIGIN,
       expectedRPID: RP_ID,
-      credential: {
-        id: passkey.credential_id,
-        publicKey: Uint8Array.from(atob(passkey.public_key), (c) => c.charCodeAt(0)),
+      authenticator: {
+        credentialID: passkey.credential_id,
+        credentialPublicKey: Uint8Array.from(atob(passkey.public_key), (c) => c.charCodeAt(0)),
         counter: passkey.counter,
       },
     });

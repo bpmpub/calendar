@@ -48,18 +48,21 @@ Deno.serve(async (req) => {
     return json({ error: "Passkey verification failed." }, 400);
   }
 
-  // @simplewebauthn/server v10 nests these under `.credential`
-  // (earlier versions had credentialID/credentialPublicKey/counter flat
-  // on registrationInfo — if this throws after a version bump, that's
-  // the first place to check against the installed version's types).
-  const { credential } = verification.registrationInfo;
+  // Confirmed against the actual @simplewebauthn/server@10.0.1 source
+  // (downloaded and read it — flat fields on registrationInfo, not
+  // nested under `.credential`; that was a wrong guess in an earlier
+  // pass and crashed this function hard enough to look like a network
+  // error client-side). credentialID is already a base64url string;
+  // credentialPublicKey is raw bytes (Uint8Array) we base64-encode to
+  // store as text.
+  const { credentialID, credentialPublicKey, counter } = verification.registrationInfo;
 
   const { error: insertErr } = await admin.from("passkeys").insert({
     user_id: user.id,
     user_email: user.email,
-    credential_id: credential.id,
-    public_key: btoa(String.fromCharCode(...credential.publicKey)),
-    counter: credential.counter,
+    credential_id: credentialID,
+    public_key: btoa(String.fromCharCode(...credentialPublicKey)),
+    counter,
   });
   if (insertErr) {
     return json({ error: insertErr.message }, 400);
