@@ -118,11 +118,10 @@ async function hasPasskey() {
 async function wireAddPasskey() {
   const btn = el("#add-passkey-btn");
 
-  if (await hasPasskey()) {
-    btn.hidden = true;
-    return;
-  }
-
+  // Wire the click handler FIRST, unconditionally — if the "does a
+  // passkey already exist" check below throws (network hiccup, RLS
+  // hiccup, whatever), the button must still work rather than silently
+  // ending up with no listener attached at all.
   btn.addEventListener("click", async () => {
     btn.disabled = true;
     const original = btn.textContent;
@@ -137,6 +136,14 @@ async function wireAddPasskey() {
       btn.disabled = false;
     }
   });
+
+  try {
+    if (await hasPasskey()) {
+      btn.hidden = true;
+    }
+  } catch (err) {
+    console.warn("hasPasskey check failed, leaving the button visible:", err);
+  }
 }
 
 // ---------- Shows ----------
