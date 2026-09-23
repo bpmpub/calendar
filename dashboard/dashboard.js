@@ -51,6 +51,7 @@ async function init() {
   await loadArtistsAndShows();
   wireTabs();
   wireShowModal();
+  wireExpandCollapseAll();
   wireQuickAdd();
   wireArtistModal();
   wireLogout();
@@ -140,6 +141,23 @@ async function wireAddPasskey() {
 
 // ---------- Shows ----------
 
+// Artist ids collapsed by the user — kept outside renderShows so
+// re-renders (after add/edit/cancel) don't reset what's open.
+const collapsedArtists = new Set();
+
+function wireExpandCollapseAll() {
+  el("#expand-all-btn").addEventListener("click", () => {
+    collapsedArtists.clear();
+    els(".dash-artist-group").forEach((g) => (g.open = true));
+  });
+  el("#collapse-all-btn").addEventListener("click", () => {
+    els(".dash-artist-group").forEach((g) => {
+      g.open = false;
+      collapsedArtists.add(g.dataset.artistId);
+    });
+  });
+}
+
 function renderShows() {
   const container = el("#shows-list");
   if (state.artists.length === 0) {
@@ -161,9 +179,20 @@ function renderShows() {
   for (const artist of state.artists) {
     const shows = byArtist.get(artist.artist_id) || [];
     if (shows.length === 0) continue;
-    const group = document.createElement("div");
+
+    const group = document.createElement("details");
     group.className = "dash-artist-group";
-    group.innerHTML = `<h3>${escapeHtml(artist.name)}</h3>`;
+    group.dataset.artistId = artist.artist_id;
+    group.open = !collapsedArtists.has(artist.artist_id);
+    group.addEventListener("toggle", () => {
+      if (group.open) collapsedArtists.delete(artist.artist_id);
+      else collapsedArtists.add(artist.artist_id);
+    });
+
+    const summary = document.createElement("summary");
+    summary.innerHTML = `${escapeHtml(artist.name)} <span class="dash-artist-count">${shows.length}</span>`;
+    group.appendChild(summary);
+
     shows.forEach((show) => group.appendChild(renderShowRow(show, artist)));
     container.appendChild(group);
   }
