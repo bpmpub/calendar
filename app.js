@@ -409,6 +409,18 @@ import { supabase, configured } from "./lib/supabase-client.js?v=10";
     });
   }
 
+  function wireTodayButton() {
+    el("#today-btn").addEventListener("click", () => {
+      state.monthCursor = startOfMonth(new Date());
+      if (state.view !== "month") {
+        state.view = "month";
+        state._userPickedView = true;
+        els(".view-btn").forEach((b) => b.classList.toggle("active", b.dataset.view === "month"));
+      }
+      render();
+    });
+  }
+
   function wireDetailOverlay() {
     el("#detail-close").addEventListener("click", () => (el("#detail-overlay").hidden = true));
     el("#detail-overlay").addEventListener("click", (e) => {
@@ -437,6 +449,7 @@ import { supabase, configured } from "./lib/supabase-client.js?v=10";
     wireClearFilters();
     wireViewToggle();
     wireMonthNav();
+    wireTodayButton();
     wireDetailOverlay();
     render();
     updateLoginLink();
