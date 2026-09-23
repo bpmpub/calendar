@@ -576,6 +576,7 @@ body {
   transition: var(--transition-control);
   text-decoration: none;
 }
+.btn[hidden] { display: none; }
 .btn-primary { background: var(--grad-action); color: var(--ink); }
 .btn-primary:hover { background: var(--grad-action-hover); transform: translateY(-1px); }
 .btn-ink { background: var(--ink); color: var(--paper); }
@@ -815,6 +816,7 @@ body {
 .dash-modal h2 { font-family: var(--font-display); font-size: var(--fs-display-sm); text-transform: uppercase; font-weight: 400; margin-bottom: var(--space-5); }
 .dash-modal-actions { display: flex; gap: var(--space-3); justify-content: flex-end; margin-top: var(--space-5); }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.field-row[hidden] { display: none; }
 
 .dash-empty { text-align: center; padding: var(--space-8); color: var(--ink-45); font-family: var(--type-ui); }
 
