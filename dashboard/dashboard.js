@@ -6,6 +6,7 @@ const state = {
   artists: [],   // artists this user can manage
   shows: [],
   activeTab: "shows",
+  showPast: false,
 };
 
 const el = (sel) => document.querySelector(sel);
@@ -168,6 +169,10 @@ function wireExpandCollapseAll() {
       collapsedArtists.add(g.dataset.artistId);
     });
   });
+  el("#show-past-checkbox").addEventListener("change", (e) => {
+    state.showPast = e.target.checked;
+    renderShows();
+  });
 }
 
 function renderShows() {
@@ -181,8 +186,19 @@ function renderShows() {
     return;
   }
 
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const visibleShows = state.showPast
+    ? state.shows
+    : state.shows.filter((s) => s.date >= todayIso);
+  const hiddenPastCount = state.shows.length - visibleShows.length;
+
+  if (visibleShows.length === 0) {
+    container.innerHTML = `<div class="dash-empty">No upcoming shows. ${hiddenPastCount} past show${hiddenPastCount === 1 ? "" : "s"} hidden — check "Show past shows" above to see them.</div>`;
+    return;
+  }
+
   const byArtist = new Map();
-  for (const show of state.shows) {
+  for (const show of visibleShows) {
     if (!byArtist.has(show.artist_id)) byArtist.set(show.artist_id, []);
     byArtist.get(show.artist_id).push(show);
   }

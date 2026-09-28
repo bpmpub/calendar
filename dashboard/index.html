@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard — BPM Show Calendar</title>
-<link rel="stylesheet" href="../styles.css?v=14">
+<link rel="stylesheet" href="../styles.css?v=15">
 </head>
 <body>
 
@@ -47,9 +47,15 @@
     </div>
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4);gap:var(--space-3);flex-wrap:wrap;">
-      <div style="display:flex;gap:var(--space-2);">
-        <button class="btn btn-outline" id="expand-all-btn">Show all</button>
-        <button class="btn btn-outline" id="collapse-all-btn">Hide all</button>
+      <div style="display:flex;align-items:center;gap:var(--space-4);flex-wrap:wrap;">
+        <div style="display:flex;gap:var(--space-2);">
+          <button class="btn btn-outline" id="expand-all-btn">Show all</button>
+          <button class="btn btn-outline" id="collapse-all-btn">Hide all</button>
+        </div>
+        <label style="display:flex;align-items:center;gap:var(--space-2);font-family:var(--type-ui);font-size:var(--fs-small);cursor:pointer;">
+          <input type="checkbox" id="show-past-checkbox">
+          Show past shows
+        </label>
       </div>
       <button class="btn btn-primary" id="add-show-btn">+ Add show</button>
     </div>
@@ -186,6 +192,6 @@
   </div>
 </div>
 
-<script type="module" src="dashboard.js?v=14"></script>
+<script type="module" src="dashboard.js?v=15"></script>
 </body>
 </html>
