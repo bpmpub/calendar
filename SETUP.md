@@ -20,8 +20,8 @@ access I don't have.
 ## 2. Configure auth
 
 In Supabase → Authentication → URL Configuration:
-- **Site URL**: `https://ash-development.github.io/bpm-cal/dashboard/`
-- **Redirect URLs**: add `https://ash-development.github.io/bpm-cal/dashboard/`
+- **Site URL**: `https://bpmpub.github.io/calendar/dashboard/`
+- **Redirect URLs**: add `https://bpmpub.github.io/calendar/dashboard/`
   (and `http://localhost:8080/dashboard/` if you want local testing to work)
 
 Authentication → Providers → Email: magic link is on by default. Turn off
@@ -73,7 +73,7 @@ can't do from here.
 5. Set the two secrets the functions need (your actual site origin and
    domain — no trailing slash on either):
    ```bash
-   supabase secrets set SITE_ORIGIN=https://ash-development.github.io RP_ID=ash-development.github.io
+   supabase secrets set SITE_ORIGIN=https://bpmpub.github.io RP_ID=bpmpub.github.io
    ```
 6. Deploy all four:
    ```bash
