@@ -775,6 +775,7 @@ body {
   box-shadow: var(--shadow-inset-hairline);
   margin-bottom: var(--space-2);
 }
+.dash-show-row .show-select { width: 18px; height: 18px; accent-color: var(--ink); cursor: pointer; }
 .dash-show-row .show-main { flex: 1; min-width: 0; font-family: var(--type-ui); font-size: var(--fs-small); }
 .dash-show-row .show-main strong { font-weight: 600; }
 .dash-show-row.cancelled { opacity: .5; text-decoration: line-through; }

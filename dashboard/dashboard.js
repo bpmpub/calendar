@@ -388,7 +388,25 @@ function extractDate(text) {
     const monthIdx = MONTH_NAMES[m[2].toLowerCase()];
     return { date: toIso(Number(m[3]), monthIdx, Number(m[1])), match: m[0] };
   }
+  // Month D, no year (e.g. "Thu, Oct 1") — tour sheets often drop the year.
+  // Assume the nearest occurrence that isn't more than ~6mo in the past,
+  // so pasting in Dec for a Jan show still lands on next year.
+  m = text.match(new RegExp(`\\b${monthPattern}\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`, "i"));
+  if (m) {
+    const monthIdx = MONTH_NAMES[m[1].toLowerCase()];
+    const day = Number(m[2]);
+    return { date: toIso(nearestYear(monthIdx, day), monthIdx, day), match: m[0] };
+  }
   return null;
+}
+
+function nearestYear(monthIdx, day) {
+  const now = new Date();
+  let year = now.getFullYear();
+  const cutoff = new Date(now);
+  cutoff.setMonth(cutoff.getMonth() - 6);
+  if (new Date(year, monthIdx, day) < cutoff) year += 1;
+  return year;
 }
 
 function extractArtist(text) {
@@ -457,7 +475,67 @@ function extractVenue(text, dateMatch, cityStateMatch, artistMatch) {
   return null;
 }
 
+function parseTabColumns(text) {
+  // Spreadsheet-style paste: date / venue / city / state as their own
+  // tab-separated columns, in any order. Find each by content rather than
+  // position so column order doesn't matter.
+  const cols = text.split("\t").map((s) => s.trim()).filter(Boolean);
+  if (cols.length < 3) return null;
+
+  let dateIdx = -1;
+  let dateResult = null;
+  for (let i = 0; i < cols.length; i++) {
+    const d = extractDate(cols[i]);
+    if (d) {
+      dateIdx = i;
+      dateResult = d;
+      break;
+    }
+  }
+
+  let stateIdx = -1;
+  for (let i = cols.length - 1; i >= 0; i--) {
+    if (i === dateIdx) continue;
+    if (/^[A-Z]{2}$/.test(cols[i]) && US_STATE_ABBR.has(cols[i])) {
+      stateIdx = i;
+      break;
+    }
+  }
+
+  let cityIdx = -1;
+  for (let i = stateIdx - 1; i >= 0; i--) {
+    if (i === dateIdx) continue;
+    cityIdx = i;
+    break;
+  }
+
+  const artistResult = extractArtist(text);
+  let artistIdx = -1;
+  if (artistResult) {
+    cols.forEach((c, i) => {
+      if (c.toLowerCase() === artistResult.name) artistIdx = i;
+    });
+  }
+
+  const usedIdx = new Set([dateIdx, stateIdx, cityIdx, artistIdx].filter((i) => i >= 0));
+  const venue = cols.filter((_, i) => !usedIdx.has(i)).join(" ").trim();
+
+  return {
+    artist_id: artistResult?.artist.artist_id || "",
+    artistName: artistResult?.artist.name || "",
+    date: dateResult?.date || "",
+    venue: venue || "",
+    city: cityIdx >= 0 ? cols[cityIdx] : "",
+    state_region: stateIdx >= 0 ? cols[stateIdx] : "",
+  };
+}
+
 function parseShowText(text) {
+  if (text.includes("\t")) {
+    const tabParsed = parseTabColumns(text);
+    if (tabParsed) return tabParsed;
+  }
+
   const dateResult = extractDate(text);
   const artistResult = extractArtist(text);
   const cityStateResult = extractCityState(text);
@@ -700,11 +778,35 @@ function renderArtists() {
       </div>
       <div class="dash-row-actions">
         <button data-action="edit">Edit</button>
+        <button data-action="delete">Delete</button>
       </div>
     `;
     row.querySelector('[data-action="edit"]').addEventListener("click", () => openArtistModal(artist));
+    row.querySelector('[data-action="delete"]').addEventListener("click", () => deleteArtist(artist));
     container.appendChild(row);
   });
+}
+
+async function deleteArtist(artist) {
+  const showCount = state.shows.filter((s) => s.artist_id === artist.artist_id).length;
+  const warning = showCount
+    ? `Delete ${artist.name} and their ${showCount} show${showCount === 1 ? "" : "s"}? This can't be undone.`
+    : `Delete ${artist.name}? This can't be undone.`;
+  if (!confirm(warning)) return;
+
+  const { error: showsError } = await supabase.from("shows").delete().eq("artist_id", artist.artist_id);
+  if (showsError) {
+    alert(showsError.message);
+    return;
+  }
+  const { error } = await supabase.from("artists").delete().eq("artist_id", artist.artist_id);
+  if (error) {
+    alert(error.message);
+    return;
+  }
+  await loadArtistsAndShows();
+  renderArtists();
+  renderShows();
 }
 
 async function getDistinctPublicists() {
