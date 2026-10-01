@@ -3,3 +3,6 @@
 .memsearch/
 .claude/scheduled_tasks.lock
 supabase/.temp/
+node_modules/
+package-lock.json
+package.json

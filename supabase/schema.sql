@@ -76,6 +76,16 @@ as $$
   select exists (select 1 from admin_emails where email = user_email);
 $$;
 
+-- Granting/revoking admin status is deliberately narrower than "any
+-- admin" — only Natalie can do it, via the dashboard's People tab.
+-- Hardcoded rather than a flag on admin_emails because this is a small
+-- internal tool, not a generalized permission system; update this email
+-- directly if that single person ever changes.
+create policy "natalie manages admin_emails" on admin_emails
+  for all to authenticated
+  using (auth.jwt() ->> 'email' = 'natalie@bpmpublicity.com')
+  with check (auth.jwt() ->> 'email' = 'natalie@bpmpublicity.com');
+
 -- Everyone sees non-pending shows; a publicist additionally sees their
 -- own pending shows (and an admin sees all pending shows) when signed in.
 create policy "read shows" on shows

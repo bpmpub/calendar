@@ -3,11 +3,15 @@ import { supabase, configured } from "../lib/supabase-client.js?v=10";
 const state = {
   user: null,
   isAdmin: false,
+  isNatalie: false,  // gates the People tab (account management) — see wirePeople*
   artists: [],   // artists this user can manage
   shows: [],
   activeTab: "shows",
   showPast: false,
+  mineOnly: false,   // admin-only: hide other publicists' artists in the Shows tab
 };
+
+const selectedShowIds = new Set();
 
 const el = (sel) => document.querySelector(sel);
 const els = (sel) => Array.from(document.querySelectorAll(sel));
@@ -46,8 +50,17 @@ async function init() {
     .eq("email", state.user.email)
     .maybeSingle();
   state.isAdmin = Boolean(adminRow);
+  // People (account management) is deliberately narrower than "admin" —
+  // only Natalie manages who can log in and who's an admin. Enforced
+  // again server-side via RLS on admin_emails inserts, not just this UI
+  // check (see supabase/schema.sql).
+  state.isNatalie = state.user.email === "natalie@bpmpublicity.com";
 
-  if (state.isAdmin) el("#artists-tab-btn").hidden = false;
+  if (state.isAdmin) {
+    el("#artists-tab-btn").hidden = false;
+    el("#mine-only-wrapper").hidden = false;
+  }
+  if (state.isNatalie) el("#people-tab-btn").hidden = false;
 
   await loadArtistsAndShows();
   wireTabs();
@@ -57,8 +70,14 @@ async function init() {
   wireArtistModal();
   wireLogout();
   wireAddPasskey();
+  wireMineOnly();
+  wireBulkActions();
   renderShows();
   if (state.isAdmin) renderArtists();
+  if (state.isNatalie) {
+    wirePersonModal();
+    renderPeople();
+  }
 
   el("#loading").hidden = true;
   el("#shows-panel").hidden = false;
@@ -100,6 +119,7 @@ function wireTabs() {
       els(".dash-tab").forEach((b) => b.classList.toggle("active", b === btn));
       el("#shows-panel").hidden = state.activeTab !== "shows";
       el("#artists-panel").hidden = state.activeTab !== "artists";
+      el("#people-panel").hidden = state.activeTab !== "people";
     });
   });
 }
@@ -108,6 +128,13 @@ function wireLogout() {
   el("#logout-btn").addEventListener("click", async () => {
     await supabase.auth.signOut();
     toLoginPage();
+  });
+}
+
+function wireMineOnly() {
+  el("#mine-only-checkbox").addEventListener("change", (e) => {
+    state.mineOnly = e.target.checked;
+    renderShows();
   });
 }
 
@@ -175,25 +202,43 @@ function wireExpandCollapseAll() {
   });
 }
 
+function visibleArtistsForShows() {
+  if (!state.mineOnly) return state.artists;
+  return state.artists.filter((a) => a.publicist_email === state.user.email);
+}
+
 function renderShows() {
   const container = el("#shows-list");
+  const artistsInView = visibleArtistsForShows();
+
   if (state.artists.length === 0) {
     container.innerHTML = '<div class="dash-empty">No artists assigned to your account yet.</div>';
+    updateBulkBar();
+    return;
+  }
+  if (artistsInView.length === 0) {
+    container.innerHTML = '<div class="dash-empty">No artists assigned to you — uncheck "Only my artists" to see the full roster.</div>';
+    updateBulkBar();
     return;
   }
   if (state.shows.length === 0) {
     container.innerHTML = '<div class="dash-empty">No shows yet. Add the first one.</div>';
+    updateBulkBar();
     return;
   }
 
+  const inViewIds = new Set(artistsInView.map((a) => a.artist_id));
   const todayIso = new Date().toISOString().slice(0, 10);
-  const visibleShows = state.showPast
-    ? state.shows
-    : state.shows.filter((s) => s.date >= todayIso);
-  const hiddenPastCount = state.shows.length - visibleShows.length;
+  const visibleShows = state.shows.filter((s) => {
+    if (!inViewIds.has(s.artist_id)) return false;
+    if (!state.showPast && s.date < todayIso) return false;
+    return true;
+  });
+  const hiddenPastCount = state.shows.filter((s) => inViewIds.has(s.artist_id) && s.date < todayIso).length;
 
   if (visibleShows.length === 0) {
     container.innerHTML = `<div class="dash-empty">No upcoming shows. ${hiddenPastCount} past show${hiddenPastCount === 1 ? "" : "s"} hidden — check "Show past shows" above to see them.</div>`;
+    updateBulkBar();
     return;
   }
 
@@ -204,7 +249,7 @@ function renderShows() {
   }
 
   container.innerHTML = "";
-  for (const artist of state.artists) {
+  for (const artist of artistsInView) {
     const shows = byArtist.get(artist.artist_id) || [];
     if (shows.length === 0) continue;
 
@@ -224,12 +269,14 @@ function renderShows() {
     shows.forEach((show) => group.appendChild(renderShowRow(show, artist)));
     container.appendChild(group);
   }
+  updateBulkBar();
 }
 
 function renderShowRow(show, artist) {
   const row = document.createElement("div");
   row.className = "dash-show-row" + (show.status === "cancelled" ? " cancelled" : "");
   row.innerHTML = `
+    <input type="checkbox" class="show-select" data-show-id="${escapeHtml(show.show_id)}" ${selectedShowIds.has(show.show_id) ? "checked" : ""} style="width:auto;flex-shrink:0;">
     <div class="show-main">
       <strong>${escapeHtml(show.date)}</strong> · ${escapeHtml(show.venue)} · ${escapeHtml(show.city)}${show.state_region ? ", " + escapeHtml(show.state_region) : ""}
       — ${escapeHtml(show.status)}
@@ -244,7 +291,42 @@ function renderShowRow(show, artist) {
   if (cancelBtn) {
     cancelBtn.addEventListener("click", () => cancelShow(show));
   }
+  row.querySelector(".show-select").addEventListener("change", (e) => {
+    if (e.target.checked) selectedShowIds.add(show.show_id);
+    else selectedShowIds.delete(show.show_id);
+    updateBulkBar();
+  });
   return row;
+}
+
+function updateBulkBar() {
+  const bar = el("#bulk-bar");
+  const count = selectedShowIds.size;
+  bar.hidden = count === 0;
+  if (count > 0) {
+    el("#bulk-count").textContent = `${count} show${count === 1 ? "" : "s"} selected`;
+  }
+}
+
+function wireBulkActions() {
+  el("#bulk-clear-btn").addEventListener("click", () => {
+    selectedShowIds.clear();
+    renderShows();
+  });
+  el("#bulk-apply-btn").addEventListener("click", async () => {
+    const status = el("#bulk-status-select").value;
+    const ids = [...selectedShowIds];
+    if (ids.length === 0) return;
+    if (!confirm(`Set ${ids.length} show(s) to "${status}"?`)) return;
+    const { error } = await supabase.from("shows").update({ status }).in("show_id", ids);
+    if (error) {
+      alert(error.message);
+      return;
+    }
+    selectedShowIds.clear();
+    await loadArtistsAndShows();
+    renderShows();
+  });
 }
 
 async function cancelShow(show) {
@@ -327,26 +409,67 @@ function extractArtist(text) {
   return best;
 }
 
-function extractVenue(text, dateMatch, artistMatch) {
-  const atMatch = text.match(/\bat\s+(.+)/i);
-  if (!atMatch) return null;
-  let venue = atMatch[1];
-  if (dateMatch) venue = venue.split(dateMatch)[0];
-  venue = venue.replace(/\b(on|for|tickets?)\b.*$/i, "");
-  venue = venue.replace(/[,\s]+$/, "").trim();
-  return venue || null;
+const US_STATE_ABBR = new Set([
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA",
+  "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT",
+  "VA", "WA", "WV", "WI", "WY", "DC",
+]);
+
+function extractCityState(text) {
+  // "City, ST" — a capitalized word (or a few) followed by a comma and a
+  // real two-letter state code. Checked against a real abbreviation list
+  // so we don't mistake "Thrice, TX" false positives from random caps.
+  const re = /\b([A-Z][a-zA-Z.'-]*(?:\s+[A-Z][a-zA-Z.'-]*){0,2}),\s*([A-Z]{2})\b/g;
+  for (const m of text.matchAll(re)) {
+    if (US_STATE_ABBR.has(m[2])) {
+      return { city: m[1].trim(), state: m[2], match: m[0] };
+    }
+  }
+  return null;
+}
+
+function extractVenue(text, dateMatch, cityStateMatch, artistMatch) {
+  let working = text;
+  if (artistMatch) working = working.slice(artistMatch.index + artistMatch.name.length);
+  if (dateMatch) working = working.split(dateMatch).join(" ");
+  if (cityStateMatch) working = working.split(cityStateMatch).join(" ");
+  working = working.replace(/\(\s*\)/g, " ").trim();
+
+  // Prefer explicit "at <venue>" or "@ <venue>" phrasing.
+  const atMatch = working.match(/(?:\bat\b|@)\s+([^,–—-]+)/i);
+  if (atMatch) {
+    const venue = atMatch[1].replace(/\b(on|for|tickets?)\b.*$/i, "").trim().replace(/[.,]+$/, "");
+    if (venue) return venue;
+  }
+
+  // Fall back to dash-separated listings, e.g. "Artist - Venue - City, ST - Date".
+  const parts = working.split(/[-–—]/).map((s) => s.trim()).filter(Boolean);
+  for (const part of parts) {
+    const cleaned = part
+      .replace(/^@\s*/, "")
+      .replace(/\b(show|tour|tickets?|doors?|on sale)\b/gi, "")
+      .replace(/[()]/g, "")
+      .replace(/^[.,\s]+|[.,\s]+$/g, "")
+      .trim();
+    if (cleaned.length > 2) return cleaned;
+  }
+  return null;
 }
 
 function parseShowText(text) {
   const dateResult = extractDate(text);
   const artistResult = extractArtist(text);
-  const venue = extractVenue(text, dateResult?.match, artistResult);
+  const cityStateResult = extractCityState(text);
+  const venue = extractVenue(text, dateResult?.match, cityStateResult?.match, artistResult);
 
   return {
     artist_id: artistResult?.artist.artist_id || "",
     artistName: artistResult?.artist.name || "",
     date: dateResult?.date || "",
     venue: venue || "",
+    city: cityStateResult?.city || "",
+    state_region: cityStateResult?.state || "",
   };
 }
 
@@ -472,8 +595,8 @@ function wireQuickAdd() {
         artist_id: parsed.artist_id,
         date: parsed.date,
         venue: parsed.venue,
-        city: "",
-        state_region: "",
+        city: parsed.city,
+        state_region: parsed.state_region,
       };
     });
     quickAddRows = quickAddRows.concat(newRows);
@@ -696,6 +819,95 @@ async function openArtistModal(artist) {
   }
 
   overlay.hidden = false;
+}
+
+// ---------- People (Natalie only) ----------
+
+async function renderPeople() {
+  const container = el("#people-list");
+  const [{ data: publicists }, { data: admins }] = await Promise.all([
+    supabase.from("publicists").select("*").order("name"),
+    supabase.from("admin_emails").select("email"),
+  ]);
+  const adminEmails = new Set((admins || []).map((a) => a.email));
+
+  if (!publicists || publicists.length === 0) {
+    container.innerHTML = '<div class="dash-empty">No one added yet.</div>';
+    return;
+  }
+
+  container.innerHTML = "";
+  publicists.forEach((p) => {
+    const isAdminPerson = adminEmails.has(p.email);
+    const row = document.createElement("div");
+    row.className = "dash-show-row";
+    row.innerHTML = `
+      <div class="show-main">
+        <strong>${escapeHtml(p.name)}</strong> · ${escapeHtml(p.email)}
+        ${isAdminPerson ? ' · <span class="status-tag confirmed" style="padding:2px 8px;font-size:9px;">ADMIN</span>' : ""}
+      </div>
+      <div class="dash-row-actions">
+        <button data-action="toggle-admin">${isAdminPerson ? "Remove admin" : "Make admin"}</button>
+      </div>
+    `;
+    row.querySelector('[data-action="toggle-admin"]').addEventListener("click", async () => {
+      if (p.email === state.user.email) {
+        alert("You can't change your own admin status here.");
+        return;
+      }
+      const { error } = isAdminPerson
+        ? await supabase.from("admin_emails").delete().eq("email", p.email)
+        : await supabase.from("admin_emails").insert({ email: p.email });
+      if (error) {
+        alert(error.message);
+        return;
+      }
+      renderPeople();
+    });
+    container.appendChild(row);
+  });
+}
+
+function wirePersonModal() {
+  const overlay = el("#person-modal-overlay");
+  const form = el("#person-form");
+
+  el("#add-person-btn").addEventListener("click", () => {
+    form.reset();
+    el("#person-form-message").innerHTML = "";
+    overlay.hidden = false;
+  });
+  el("#person-cancel-btn").addEventListener("click", () => (overlay.hidden = true));
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) overlay.hidden = true;
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const messageEl = el("#person-form-message");
+    messageEl.innerHTML = "";
+
+    const name = el("#person-name").value.trim();
+    const email = el("#person-email").value.trim();
+    const makeAdmin = el("#person-admin").checked;
+
+    try {
+      const { error: pErr } = await supabase
+        .from("publicists")
+        .upsert({ email, name }, { onConflict: "email" });
+      if (pErr) throw pErr;
+
+      if (makeAdmin) {
+        const { error: aErr } = await supabase.from("admin_emails").insert({ email });
+        if (aErr) throw aErr;
+      }
+
+      overlay.hidden = true;
+      renderPeople();
+    } catch (err) {
+      messageEl.innerHTML = `<p class="field-error">${escapeHtml(err.message)}</p>`;
+    }
+  });
 }
 
 init().catch((err) => {
