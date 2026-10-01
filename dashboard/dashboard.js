@@ -610,7 +610,7 @@ function renderQuickAddPreview() {
           <input type="date" data-field="date" value="${escapeHtml(row.date)}" class="${row.date ? "" : "missing"}">
           <input type="text" data-field="venue" placeholder="Venue" value="${escapeHtml(row.venue)}" class="${row.venue.trim() ? "" : "missing"}">
           <input type="text" data-field="city" placeholder="City" value="${escapeHtml(row.city)}" class="${row.city.trim() ? "" : "missing"}">
-          <input type="text" data-field="state_region" placeholder="State">
+          <input type="text" data-field="state_region" placeholder="State" value="${escapeHtml(row.state_region)}">
           <button type="button" class="quick-add-remove-row qa-remove" title="Remove">✕</button>
         </div>
       `;
