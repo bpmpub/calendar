@@ -72,6 +72,7 @@ async function init() {
   wireAddPasskey();
   wireMineOnly();
   wireBulkActions();
+  populateQuickAddArtistSelect();
   renderShows();
   if (state.isAdmin) renderArtists();
   if (state.isNatalie) {
@@ -263,10 +264,35 @@ function renderShows() {
     });
 
     const summary = document.createElement("summary");
-    summary.innerHTML = `${escapeHtml(artist.name)} <span class="dash-artist-count">${shows.length}</span>`;
+    summary.innerHTML = `
+      <input type="checkbox" class="artist-select-all" style="width:auto;margin-right:var(--space-2);">
+      ${escapeHtml(artist.name)} <span class="dash-artist-count">${shows.length}</span>
+    `;
     group.appendChild(summary);
 
-    shows.forEach((show) => group.appendChild(renderShowRow(show, artist)));
+    const rowEls = shows.map((show) => {
+      const row = renderShowRow(show, artist);
+      group.appendChild(row);
+      return row;
+    });
+
+    const selectAllBox = summary.querySelector(".artist-select-all");
+    const selectedCount = shows.filter((s) => selectedShowIds.has(s.show_id)).length;
+    selectAllBox.checked = selectedCount > 0 && selectedCount === shows.length;
+    selectAllBox.indeterminate = selectedCount > 0 && selectedCount < shows.length;
+    selectAllBox.addEventListener("click", (e) => e.stopPropagation());
+    selectAllBox.addEventListener("change", () => {
+      shows.forEach((s) => {
+        if (selectAllBox.checked) selectedShowIds.add(s.show_id);
+        else selectedShowIds.delete(s.show_id);
+      });
+      rowEls.forEach((row) => {
+        row.querySelector(".show-select").checked = selectAllBox.checked;
+      });
+      selectAllBox.indeterminate = false;
+      updateBulkBar();
+    });
+
     container.appendChild(group);
   }
   updateBulkBar();
@@ -656,13 +682,28 @@ async function submitQuickAddRows() {
   renderQuickAddPreview();
 }
 
+function populateQuickAddArtistSelect() {
+  const select = el("#quick-add-artist");
+  if (!select) return;
+  const current = select.value;
+  select.innerHTML =
+    '<option value="">— detect per line / pick per row —</option>' +
+    state.artists
+      .map((a) => `<option value="${escapeHtml(a.artist_id)}">${escapeHtml(a.name)}</option>`)
+      .join("");
+  select.value = current;
+}
+
 function wireQuickAdd() {
   const textarea = el("#quick-add-input");
   const btn = el("#quick-add-btn");
+  const artistSelect = el("#quick-add-artist");
 
   btn.addEventListener("click", () => {
     const lines = textarea.value.split("\n").map((l) => l.trim()).filter(Boolean);
     if (lines.length === 0) return;
+
+    const forcedArtistId = artistSelect.value;
 
     const newRows = lines.map((line) => {
       const parsed = parseShowText(line);
@@ -670,7 +711,7 @@ function wireQuickAdd() {
       return {
         id: quickAddRowSeq,
         raw: line,
-        artist_id: parsed.artist_id,
+        artist_id: parsed.artist_id || forcedArtistId || "",
         date: parsed.date,
         venue: parsed.venue,
         city: parsed.city,
@@ -807,6 +848,7 @@ async function deleteArtist(artist) {
   await loadArtistsAndShows();
   renderArtists();
   renderShows();
+  populateQuickAddArtistSelect();
 }
 
 async function getDistinctPublicists() {
@@ -879,6 +921,7 @@ function wireArtistModal() {
       await loadArtistsAndShows();
       renderArtists();
       renderShows();
+      populateQuickAddArtistSelect();
     } catch (err) {
       messageEl.innerHTML = `<p class="field-error">${escapeHtml(err.message)}</p>`;
     }

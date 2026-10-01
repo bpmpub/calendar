@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard — BPM Show Calendar</title>
-<link rel="stylesheet" href="../styles.css?v=17">
+<link rel="stylesheet" href="../styles.css?v=18">
 </head>
 <body>
 
@@ -38,11 +38,19 @@
   <div id="shows-panel" hidden>
     <div class="quick-add">
       <label class="field-label" for="quick-add-input">Quick add</label>
+      <div class="field" style="margin-bottom:var(--space-2);">
+        <label class="field-label" for="quick-add-artist">Artist for these lines (optional)</label>
+        <div class="select">
+          <select class="input" id="quick-add-artist">
+            <option value="">— detect per line / pick per row —</option>
+          </select>
+        </div>
+      </div>
       <textarea class="input" id="quick-add-input" rows="3"
         placeholder="One show per line, e.g.&#10;311 show at Brooklyn Paramount 3/11/27&#10;Waterparks at The Fillmore on March 5th, 2027"></textarea>
       <div class="quick-add-row">
         <button class="btn btn-ink" id="quick-add-btn" type="button">Parse</button>
-        <p class="field-hint">Pulls out what it can find per line (artist, date, venue) — review and fill in city/state below, nothing saves until you hit Add.</p>
+        <p class="field-hint">Pulls out what it can find per line (date, venue, city, state) — set an artist above if every line below is the same artist, or pick it per row after parsing. Nothing saves until you hit Add.</p>
       </div>
       <div id="quick-add-preview"></div>
     </div>
@@ -242,6 +250,6 @@
   </div>
 </div>
 
-<script type="module" src="dashboard.js?v=17"></script>
+<script type="module" src="dashboard.js?v=18"></script>
 </body>
 </html>
